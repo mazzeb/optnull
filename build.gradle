@@ -1,0 +1,104 @@
+
+buildscript {
+    ext {
+        kotlinVersion = '1.3.10'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+    }
+}
+
+apply plugin: 'kotlin'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+group = "com.crunchyjelly"
+version = "1.0"
+
+repositories {
+    mavenCentral()
+}
+
+compileKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-Xjsr305=strict"]
+        jvmTarget = "1.8"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        freeCompilerArgs = ["-Xjsr305=strict"]
+        jvmTarget = "1.8"
+    }
+}
+
+jar {
+    manifest.attributes provider: 'gradle'
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+}
+
+artifacts {
+    archives jar
+    archives javadocJar
+    archives sourcesJar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'optnull'
+            artifact jar
+            artifact sourcesJar
+            artifact javadocJar
+            pom {
+                name = 'optnull'
+                description = 'Extensions for Optional and Nullable types to convert to each other'
+                url = 'http://github.com/mazzeb/optnull'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'mazzeb'
+                        name = 'Matthias Bargmann'
+                    }
+                }
+                scm {
+                    connection = 'scm:git@github.com:mazzeb/optnull'
+                    developerConnection = 'scm:git@github.com:mazzeb/optnull'
+                    url = 'scm:git@github.com:mazzeb/optnull'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username sonatypeUsername
+                password sonatypePassword
+            }
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
+}
